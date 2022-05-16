@@ -2,8 +2,8 @@ package uptime
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/asaskevich/govalidator"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	uptime "github.com/uptime-com/rest-api-clients/golang/uptime"
 )
@@ -69,10 +69,20 @@ func resourceUptimeCheckWhois() *schema.Resource {
 func validateDomain(val interface{}, key string) (warns []string, errs []error) {
 	urlStr := val.(string)
 
-	if govalidator.IsDNSName(urlStr) != true {
-		errs = append(errs, fmt.Errorf("Invalid domain: %s", urlStr))
+	parts := strings.Split(urlStr, ".")
+	if len(parts) > 1 {
+		parts = parts[len(parts)-2:]
 	}
+	domain := strings.Join(parts, ".")
 
+	if urlStr != domain {
+		if domain != "" {
+			errs = append(errs, fmt.Errorf("Invalid domain: %s. Did you mean %s?", urlStr, domain))
+		} else {
+
+			errs = append(errs, fmt.Errorf("Invalid domain: %s", urlStr))
+		}
+	}
 	return
 }
 
